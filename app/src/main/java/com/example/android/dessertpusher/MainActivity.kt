@@ -29,10 +29,15 @@ import androidx.lifecycle.LifecycleObserver
 import com.example.android.dessertpusher.databinding.ActivityMainBinding
 import timber.log.Timber
 
+const val KEY_REVENUE = "key_revenue"
+const val KEY_DESSERTS_SOLD = "key_desserts_sold"
+const val KEY_TIMER = "key_timer"
+
 class MainActivity : AppCompatActivity(), LifecycleObserver {
 
     private var revenue = 0
     private var dessertsSold = 0
+    private lateinit var dessertTimer: DessertTimer
 
     // Contains all the views
     private lateinit var binding: ActivityMainBinding
@@ -63,6 +68,7 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
     private var currentDessert = allDesserts[0]
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // because we put something in the onSaveInstaceState, it is available here
         super.onCreate(savedInstanceState)
 
         // the tag 'i' is the severity of the log message
@@ -78,6 +84,17 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
             onDessertClicked()
         }
 
+        // since we just changed dessert timer to extend lifecycle and we added a parameter, need
+            // to add it here too
+        dessertTimer = DessertTimer(this.lifecycle)
+
+        // if savedINstanceState is not null, we are recreating the activity
+        if (savedInstanceState != null) {
+            revenue = savedInstanceState.getInt(KEY_REVENUE)
+            dessertsSold = savedInstanceState.getInt(KEY_DESSERTS_SOLD)
+            dessertTimer.secondsCount = savedInstanceState.getInt(KEY_TIMER)
+        }
+
         // Set the TextViews to the right values
         binding.revenue = revenue
         binding.amountSold = dessertsSold
@@ -85,6 +102,8 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
         // Make sure the correct dessert is showing
         binding.dessertButton.setImageResource(currentDessert.imageId)
     }
+
+
 
     /**
      * Updates the score when the dessert is clicked. Possibly shows a new dessert.
@@ -156,7 +175,11 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
     override fun onStart() {
         super.onStart()
         Timber.i("onStart called")
-        dessertsSold = 0
+    }
+
+    // this is called after onstart
+    override fun onRestoreInstanceState(savedInstanceState: Bundle?) {
+        super.onRestoreInstanceState(savedInstanceState)
     }
 
     override fun onResume() {
@@ -182,5 +205,15 @@ class MainActivity : AppCompatActivity(), LifecycleObserver {
     override fun onStop() {
         super.onStop()
         Timber.i("onStop called")
+    }
+
+    // the bundle is a collection of key-value pairs
+    override fun onSaveInstanceState(outState: Bundle?) {
+        // you should ALWAYS call the super method
+        super.onSaveInstanceState(outState)
+        outState?.putInt(KEY_REVENUE, revenue)
+        outState?.putInt(KEY_DESSERTS_SOLD, dessertsSold)
+        outState?.putInt(KEY_TIMER, dessertTimer.secondsCount)
+        Timber.i("onSaveInstanceState called")
     }
 }
